@@ -22,7 +22,7 @@ class EpochConverter
         data_epoch = parse_data
         unless data_epoch.nil?
           @page += 1
-          @data.push(*data_epoch)
+          @data = @data.push(*data_epoch)
         else
           break
         end

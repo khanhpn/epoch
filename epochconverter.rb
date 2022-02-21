@@ -10,6 +10,9 @@ class EpochConverter
   def initialize(start_date, end_date, address, csv_file_name, page)
     @page = page
     @data = []
+    @address = address
+    @start_date = start_date
+    @end_date = end_date
     @csv_file_name = csv_file_name
   end
 

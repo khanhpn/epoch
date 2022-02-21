@@ -1,31 +1,48 @@
 require "csv"
 require 'net/http'
 require 'json'
+require 'pry'
 
 class EpochConverter
-  attr_accessor :url, :data, :csv_file_name
+  attr_accessor :url, :data, :csv_file_name, :page
   CSV_ATTRIBUTES = %w(hash Timestamp toAddress confirmed revert amount fee tokenAbbr tokenName tokenDecimal tokenType).freeze
 
-  def initialize(start_date, end_date, address, csv_file_name, total)
-    @url = "https://apilist.tronscan.org/api/transaction?sort=-timestamp&count=true&limit=#{total}&start=0&address=#{address}&start_timestamp=#{start_date}&end_timestamp=#{end_date}"
+  def initialize(start_date, end_date, address, csv_file_name, page)
+    @page = page
     @data = []
     @csv_file_name = csv_file_name
   end
 
   def execute
     begin
-      @data = JSON.parse(Net::HTTP.get(URI(@url))).dig('data')
+      puts "Start get data #{Time.now}"
+      while true
+        data_epoch = parse_data
+        unless data_epoch.nil?
+          @page += 1
+          @data.push(*data_epoch)
+        else
+          break
+        end
+      end
       export_csv
+      puts "Finish get and export csv data #{Time.now}"
     rescue
       raise
     end
   end
 
   private
+  def parse_data
+    url = "https://apilist.tronscan.org/api/transaction?sort=-timestamp&count=true&limit=50&start=#{@page}&address=#{@address}&start_timestamp=#{@start_date}&end_timestamp=#{@end_date}"
+    puts "Current page: #{@page}, url: #{url}"
+    JSON.parse(Net::HTTP.get(URI(url))).dig('data')
+  end
+
   def export_csv
     CSV.open("#{@csv_file_name}.csv", "wb") do |csv|
       csv << CSV_ATTRIBUTES
-      @data.each do |item|
+      @data.uniq.each do |item|
         csv << [
           item.dig('hash'),
           item.dig('timestamp'),
@@ -48,7 +65,7 @@ start_timestamp = 1635724800000 # 2021/11/1 0:0:0 GMT
 end_timestamp = 1640908800000   # 2021/31/1 0:0:0 GMT
 address = "TQy5KQuJWhHyCTN5NApKZzBiz2J1TkqntU"
 csv_file_name = "epoch"
-total = 50   # set total record for per page
+page = 0  # start page 0
 
-epoch = EpochConverter.new(start_timestamp, end_timestamp, address, csv_file_name, total)
+epoch = EpochConverter.new(start_timestamp, end_timestamp, address, csv_file_name, page)
 epoch.execute

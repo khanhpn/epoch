@@ -3,11 +3,11 @@ require 'net/http'
 require 'json'
 
 class EpochConverter
-  attr_accessor :url, :start_date, :end_date, :address, :data, :csv_file_name
-  CSV_ATTRIBUTES = %w(hash toAddress confirmed revert amount fee tokenAbbr tokenName tokenDecimal tokenType).freeze
+  attr_accessor :url, :data, :csv_file_name
+  CSV_ATTRIBUTES = %w(hash Timestamp toAddress confirmed revert amount fee tokenAbbr tokenName tokenDecimal tokenType).freeze
 
-  def initialize(start_date, end_date, address, csv_file_name)
-    @url = "https://apilist.tronscan.org/api/transaction?sort=-timestamp&count=true&limit=50&start=0&address=#{address}&start_timestamp=#{start_date}&end_timestamp=#{end_date}"
+  def initialize(start_date, end_date, address, csv_file_name, total)
+    @url = "https://apilist.tronscan.org/api/transaction?sort=-timestamp&count=true&limit=#{total}&start=0&address=#{address}&start_timestamp=#{start_date}&end_timestamp=#{end_date}"
     @data = []
     @csv_file_name = csv_file_name
   end
@@ -28,6 +28,7 @@ class EpochConverter
       @data.each do |item|
         csv << [
           item.dig('hash'),
+          item.dig('timestamp'),
           item.dig('toAddress'),
           item.dig('confirmed'),
           item.dig('revert'),
@@ -47,6 +48,7 @@ start_timestamp = 1635724800000 # 2021/11/1 0:0:0 GMT
 end_timestamp = 1640908800000   # 2021/31/1 0:0:0 GMT
 address = "TQy5KQuJWhHyCTN5NApKZzBiz2J1TkqntU"
 csv_file_name = "epoch"
+total = 50   # set total record for per page
 
-epoch = EpochConverter.new(start_timestamp, end_timestamp, address, csv_file_name)
+epoch = EpochConverter.new(start_timestamp, end_timestamp, address, csv_file_name, total)
 epoch.execute

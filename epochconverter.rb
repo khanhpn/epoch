@@ -1,7 +1,6 @@
 require "csv"
 require 'net/http'
 require 'json'
-require 'pry'
 
 class EpochConverter
   attr_accessor :url, :data, :csv_file_name, :page

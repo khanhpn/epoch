@@ -1,9 +1,8 @@
 require "csv"
 require 'net/http'
 require 'json'
-
 class EpochConverter
-  attr_accessor :url, :data, :csv_file_name, :page
+  attr_accessor :url, :data, :csv_file_name, :page, :all_pagings
   CSV_ATTRIBUTES = %w(hash Timestamp toAddress confirmed revert amount fee tokenAbbr tokenName tokenDecimal tokenType).freeze
 
   def initialize(start_date, end_date, address, csv_file_name, page)
@@ -13,14 +12,18 @@ class EpochConverter
     @start_date = start_date
     @end_date = end_date
     @csv_file_name = csv_file_name
+    @all_pagings = 0
   end
 
   def execute
     begin
+      total_page
+      puts @all_pagings
       puts "Start get data #{Time.now}"
       while true
-        data_epoch = parse_data
-        unless data_epoch.nil?
+        data_epoch = parse_data.dig('data')
+        if @page <= @all_pagings
+          puts "Current page: #{@page}"
           @page += 1
           @data = @data.push(*data_epoch)
         else
@@ -35,10 +38,14 @@ class EpochConverter
   end
 
   private
+  def total_page
+    @all_pagings = (parse_data.dig('rangeTotal').to_i / 50.0).ceil
+  end
+
   def parse_data
     url = "https://apilist.tronscan.org/api/transaction?sort=-timestamp&count=true&limit=50&start=#{@page}&address=#{@address}&start_timestamp=#{@start_date}&end_timestamp=#{@end_date}"
-    puts "Current page: #{@page}, url: #{url}"
-    JSON.parse(Net::HTTP.get(URI(url))).dig('data')
+    puts url
+    JSON.parse(Net::HTTP.get(URI(url)))
   end
 
   def export_csv

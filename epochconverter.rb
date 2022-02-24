@@ -51,7 +51,7 @@ class EpochConverter
   def export_csv
     CSV.open("#{@csv_file_name}.csv", "wb") do |csv|
       csv << CSV_ATTRIBUTES
-      @data.uniq.each do |item|
+      @data.each do |item|
         csv << [
           item.dig('hash'),
           item.dig('timestamp'),

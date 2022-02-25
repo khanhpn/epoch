@@ -18,13 +18,15 @@ class EpochConverter
   def execute
     begin
       total_page
+      current_page = 0
       puts @all_pagings
       puts "Start get data #{Time.now}"
       while true
+        @page = paging_logic(current_page)
         data_epoch = parse_data.dig('data')
-        if @page <= @all_pagings
-          puts "Current page: #{@page}"
-          @page += 1
+        if current_page <= @all_pagings
+          puts "Current page: #{current_page}"
+          current_page += 1
           @data = @data.push(*data_epoch)
         else
           break
@@ -38,6 +40,11 @@ class EpochConverter
   end
 
   private
+  def paging_logic(current_page)
+    return 0 if current_page == 0
+    current_page == 1 ? @page + 51 : @page + 50
+  end
+
   def total_page
     @all_pagings = (parse_data.dig('rangeTotal').to_i / 50.0).ceil
   end
